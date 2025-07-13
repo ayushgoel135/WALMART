@@ -65,8 +65,7 @@ MIDDLEWARE = [
 ROOT_URLCONF = 'supplychain.urls'
 
 # For production
-if not DEBUG:
-    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 TEMPLATES = [
     {
