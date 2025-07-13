@@ -1,0 +1,131 @@
+{% extends "retail/base.html" %}
+{% load static %}
+
+{% block title %}Predictive Analytics{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2><i class="bi bi-graph-up"></i> Predictive Analytics</h2>
+    </div>
+    <div class="col-md-4 text-end">
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" name="generate_all_forecasts" class="btn btn-primary">
+                <i class="bi bi-arrow-repeat"></i> Generate All Forecasts
+            </button>
+        </form>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Product Forecasts</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>SKU</th>
+                                <th>Last Forecast</th>
+                                <th>Forecasted Qty</th>
+                                <th>Confidence</th>
+                                <th>Actual Qty</th>
+                                <th>Accuracy</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in products %}
+                            <tr>
+                                <td>{{ product.name }}</td>
+                                <td>{{ product.sku }}</td>
+                                <td>
+                                    {% with product.demandforecast_set.first as latest %}
+                                        {{ latest.forecast_date|date:"Y-m-d"|default:"-" }}
+                                    {% endwith %}
+                                </td>
+                                <td>
+                                    {% with product.demandforecast_set.first as latest %}
+                                        {{ latest.forecasted_quantity|default:"-" }}
+                                    {% endwith %}
+                                </td>
+                                <td>
+                                    {% with product.demandforecast_set.first as latest %}
+                                        {{ latest.confidence_level|default:"-" }}%
+                                    {% endwith %}
+                                </td>
+                                <td>
+                                    {% with product.demandforecast_set.first as latest %}
+                                        {{ latest.actual_quantity|default:"-" }}
+                                    {% endwith %}
+                                </td>
+                                <td>
+                                    {% with product.demandforecast_set.first as latest %}
+                                        {{ latest.accuracy|floatformat:2|default:"-" }}%
+                                    {% endwith %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'inventory_detail' product.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-arrow-right"></i> Details
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Forecast Accuracy Trends</h5>
+            </div>
+            <div class="card-body">
+                <div id="accuracyChart" class="chart-container"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Accuracy chart data would be loaded via AJAX in a real implementation
+    const accuracyData = {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+        datasets: [{
+            label: 'Forecast Accuracy %',
+            data: [85, 78, 92, 88, 76, 95],
+            borderColor: '#4e73df',
+            backgroundColor: 'rgba(78, 115, 223, 0.05)',
+            fill: true
+        }]
+    };
+    
+    new Chart(document.getElementById('accuracyChart'), {
+        type: 'line',
+        data: accuracyData,
+        options: {
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    min: 50,
+                    max: 100
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

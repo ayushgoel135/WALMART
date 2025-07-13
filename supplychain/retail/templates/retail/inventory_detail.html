@@ -1,0 +1,127 @@
+{% extends "retail/base.html" %}
+{% load static %}
+
+{% block title %}{{ product.name }} Inventory{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <h2><i class="bi bi-box-seam"></i> {{ product.name }}</h2>
+    </div>
+    <div class="col-md-6 text-end">
+        <span class="badge bg-{% if product.current_stock < product.min_stock_level %}danger{% else %}success{% endif %}">
+            Stock: {{ product.current_stock }} (Min: {{ product.min_stock_level }})
+        </span>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Product Details</h5>
+            </div>
+            <div class="card-body">
+                {% if product.image %}
+                <img src="{{ product.image.url }}" class="img-thumbnail mb-3" style="max-height: 200px;">
+                {% endif %}
+                <p><strong>SKU:</strong> {{ product.sku }}</p>
+                <p><strong>Category:</strong> {{ product.get_category_display }}</p>
+                <p><strong>Price:</strong> ${{ product.price }}</p>
+                <p><strong>Lead Time:</strong> {{ product.lead_time_days }} days</p>
+                <p><strong>Description:</strong> {{ product.description }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Inventory Across Warehouses</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Warehouse</th>
+                                <th>Location</th>
+                                <th>Quantity</th>
+                                <th>Last Restocked</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for inv in inventory %}
+                            <tr>
+                                <td>{{ inv.warehouse.name }}</td>
+                                <td>{{ inv.warehouse.location }}</td>
+                                <td>{{ inv.quantity }}</td>
+                                <td>{{ inv.last_restocked|date:"M d, Y" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4">No inventory records found</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5>Demand Forecasting</h5>
+                    <form method="post">
+                        {% csrf_token %}
+                        <button type="submit" name="generate_forecast" class="btn btn-primary">
+                            <i class="bi bi-graph-up"></i> Generate Forecast
+                        </button>
+                    </form>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if forecasts %}
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Forecast Date</th>
+                                <th>Period</th>
+                                <th>Forecasted Quantity</th>
+                                <th>Confidence Level</th>
+                                <th>Actual Quantity</th>
+                                <th>Accuracy</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for forecast in forecasts %}
+                            <tr>
+                                <td>{{ forecast.forecast_date|date:"M d, Y" }}</td>
+                                <td>{{ forecast.forecast_period }}</td>
+                                <td>{{ forecast.forecasted_quantity }}</td>
+                                <td>{{ forecast.confidence_level }}%</td>
+                                <td>{{ forecast.actual_quantity|default:"-" }}</td>
+                                <td>
+                                    {% if forecast.accuracy %}
+                                    {{ forecast.accuracy|floatformat:2 }}%
+                                    {% else %}-{% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p>No forecasts available. Generate one to get started.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

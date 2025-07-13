@@ -1,0 +1,77 @@
+{% extends "retail/base.html" %}
+{% load static %}
+{% load django_tables2 %}
+{% load crispy_forms_tags %}
+
+{% block title %}Order Management{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <h2><i class="bi bi-truck"></i> Order Management</h2>
+    </div>
+    <div class="col-md-6 text-end">
+        <form class="form-inline float-end" method="get">
+            {{ filter_form|crispy }}
+            <button type="submit" class="btn btn-primary ms-2">Filter</button>
+        </form>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        {% render_table table %}
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5>Order Status Distribution</h5>
+    </div>
+    <div class="card-body">
+        <div id="statusChart" style="height: 300px;"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Status distribution chart
+    const statusData = {
+        {% for status in status_distribution %}
+        '{{ status.status }}': {{ status.count }},
+        {% endfor %}
+    };
+    
+    const chartData = {
+        labels: Object.keys(statusData),
+        datasets: [{
+            data: Object.values(statusData),
+            backgroundColor: [
+                '#6c757d', // Pending
+                '#fd7e14', // Processing
+                '#0dcaf0', // Shipped
+                '#ffc107', // Out for Delivery
+                '#198754', // Delivered
+                '#dc3545'  // Cancelled
+            ]
+        }]
+    };
+    
+    new Chart(document.getElementById('statusChart'), {
+        type: 'doughnut',
+        data: chartData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}
