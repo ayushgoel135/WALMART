@@ -149,6 +149,40 @@ def inventory_list(request):
 #     })
 
 @login_required
+def add_inventory(request, product_id):
+    product = get_object_or_404(Product, id=product_id, retailer__user=request.user)
+    
+    if request.method == 'POST':
+        form = InventoryUpdateForm(request.POST)
+        if form.is_valid():
+            # Get or create inventory record
+            inventory, created = Inventory.objects.get_or_create(
+                product=product,
+                warehouse=form.cleaned_data['warehouse'],
+                defaults={'quantity': form.cleaned_data['quantity']}
+            )
+            
+            if not created:
+                inventory.quantity = form.cleaned_data['quantity']
+                inventory.save()
+            
+            # Update product's total stock
+            product.current_stock = product.inventory_set.aggregate(
+                total=Sum('quantity')
+            )['total'] or 0
+            product.save()
+            
+            messages.success(request, "Inventory updated successfully!")
+            return redirect('inventory_list')
+    else:
+        form = InventoryUpdateForm()
+    
+    return render(request, 'retail/add_inventory.html', {
+        'product': product,
+        'form': form
+    })
+
+@login_required
 def inventory_detail(request, product_id):
     product = get_object_or_404(Product, id=product_id, retailer__user=request.user)
     inventory = Inventory.objects.filter(product=product)
