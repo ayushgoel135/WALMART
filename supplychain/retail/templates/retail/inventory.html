@@ -29,58 +29,49 @@
         </div>
     </div>
     <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>Product</th>
-                        <th>SKU</th>
-                        <th>Category</th>
-                        <th>Current Stock</th>
-                        <th>Min Level</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for product in products %}
-                    <tr class="{% if product.is_low_stock %}table-warning{% endif %}">
-                        <td>
-                            <strong>{{ product.name }}</strong>
-                            {% if product.image %}
-                            <img src="{{ product.image.url }}" class="img-thumbnail ms-2" style="max-height: 40px;">
-                            {% endif %}
-                        </td>
-                        <td>{{ product.sku }}</td>
-                        <td>{{ product.get_category_display }}</td>
-                        <td>{{ product.current_stock }}</td>
-                        <td>{{ product.min_stock_level }}</td>
-                        <td>
-                            {% if product.is_low_stock %}
-                            <span class="badge bg-danger">Low Stock</span>
-                            {% else %}
-                            <span class="badge bg-success">In Stock</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <a href="{% url 'inventory_detail' product.id %}" class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-eye"></i> View
-                            </a>
-                            <a href="{% url 'admin:retail_product_change' product.id %}" class="btn btn-sm btn-outline-secondary">
-                                <i class="bi bi-pencil"></i> Edit
-                            </a>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="7" class="text-center">No products found</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+      <!-- Inventory Table Section -->
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>SKU</th>
+                    <th>Total Stock</th>
+                    <th>Warehouses</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in products %}
+                <tr>
+                    <td>{{ product.name }}</td>
+                    <td>{{ product.sku }}</td>
+                    <td>{{ product.current_stock }}</td>
+                    <td>
+                        {% for inv in product.inventory_set.all %}
+                        <span class="badge bg-secondary">
+                            {{ inv.warehouse.name }}: {{ inv.quantity }}
+                        </span>
+                        {% empty %}
+                        <span class="text-danger">No inventory assigned</span>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        {% if product.current_stock < product.min_stock_level %}
+                        <span class="badge bg-danger">Low Stock</span>
+                        {% else %}
+                        <span class="badge bg-success">In Stock</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center">No products found</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
-</div>
 
 <div class="card">
     <div class="card-header">
