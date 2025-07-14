@@ -38,6 +38,7 @@ urlpatterns = [
     
     # Inventory
     path('inventory/', views.inventory_list, name='inventory_list'),
+    path('inventory/add/<int:product_id>/', views.add_inventory, name='add_inventory'),
     path('inventory/<int:product_id>/', views.inventory_detail, name='inventory_detail'),
     
     # Orders
