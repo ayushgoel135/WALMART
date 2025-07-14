@@ -101,25 +101,18 @@ def dashboard(request):
 def inventory_list(request):
     try:
         retailer = Retailer.objects.get(user=request.user)
-        products = Product.objects.filter(retailer=retailer).select_related('retailer').prefetch_related('inventory_set')
-        
-        # Debug print (remove in production)
-        print(f"Found {products.count()} products for {retailer.company_name}")
-        for p in products:
-            print(f"{p.name} - Inventory: {p.inventory_set.count()} records")
-
-        # Calculate metrics
-        low_stock_count = products.filter(current_stock__lt=F('min_stock_level')).count()
+        products = Product.objects.filter(retailer=retailer).annotate(
+            total_inventory=Coalesce(Sum('inventory__quantity'), 0)
+        ).order_by('name')
         
         return render(request, 'retail/inventory.html', {
             'products': products,
             'retailer': retailer,
-            'low_stock_count': low_stock_count,
+            'low_stock_count': products.filter(current_stock__lt=F('min_stock_level')).count(),
             'total_products': products.count()
         })
-        
     except Retailer.DoesNotExist:
-        messages.error(request, "Retailer profile not found")
+        messages.error(request, "Please complete your retailer profile first")
         return redirect('create_retailer_profile')
 # @login_required
 # def inventory_list(request):
