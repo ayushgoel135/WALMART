@@ -102,15 +102,15 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Inventory status chart
+    const lowStockCount = {{ low_stock_count|default:0 }};
+    const inStockCount = {{ total_products|default:0 }} - lowStockCount;
+    
     new Chart(document.getElementById('inventoryStatusChart'), {
         type: 'doughnut',
         data: {
             labels: ['Low Stock', 'In Stock'],
             datasets: [{
-                data: [
-                    {{ low_stock_count|default:0 }},
-                    {{ total_products|default:0|add:low_stock_count|default:0|negate|add:total_products|default:0 }}
-                ],
+                data: [lowStockCount, inStockCount],
                 backgroundColor: ['#ffc107', '#198754']
             }]
         }
@@ -120,10 +120,10 @@ document.addEventListener('DOMContentLoaded', function() {
     new Chart(document.getElementById('categoryDistributionChart'), {
         type: 'bar',
         data: {
-            labels: {{ category_labels|safe }},
+            labels: JSON.parse('{{ category_labels|safe }}'),
             datasets: [{
                 label: 'Products by Category',
-                data: {{ category_counts|safe }},
+                data: JSON.parse('{{ category_counts|safe }}'),
                 backgroundColor: '#4e73df'
             }]
         }
