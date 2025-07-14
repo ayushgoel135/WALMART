@@ -7,6 +7,7 @@ from django.http import JsonResponse
 from django.views.generic import ListView, DetailView, CreateView, UpdateView
 from django.urls import reverse_lazy
 from django.db.models import Sum, F, Q, Count
+from django.db.models.functions import Coalesce
 from django.utils import timezone
 from datetime import timedelta
 import pandas as pd
