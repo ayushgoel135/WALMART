@@ -100,21 +100,30 @@ def dashboard(request):
 # Inventory Management Views
 @login_required
 def inventory_list(request):
-    try:
-        retailer = Retailer.objects.get(user=request.user)
-        products = Product.objects.filter(retailer=retailer).annotate(
-            total_inventory=Coalesce(Sum('inventory__quantity'), 0)
-        ).order_by('name')
-        
-        return render(request, 'retail/inventory.html', {
-            'products': products,
-            'retailer': retailer,
-            'low_stock_count': products.filter(current_stock__lt=F('min_stock_level')).count(),
-            'total_products': products.count()
-        })
-    except Retailer.DoesNotExist:
-        messages.error(request, "Please complete your retailer profile first")
-        return redirect('create_retailer_profile')
+    retailer = get_object_or_404(Retailer, user=request.user)
+    products = Product.objects.filter(retailer=retailer).order_by('name')
+    
+    # Calculate metrics
+    low_stock_count = products.filter(current_stock__lt=F('min_stock_level')).count()
+    total_products = products.count()
+    
+    # Get category distribution
+    category_distribution = products.values('category').annotate(count=Count('id'))
+    category_labels = [dict(Product.CATEGORY_CHOICES).get(item['category']) for item in category_distribution]
+    category_counts = [item['count'] for item in category_distribution]
+    
+    # Check for low stock items
+    for product in products:
+        product.is_low_stock = product.current_stock < product.min_stock_level
+    
+    return render(request, 'retail/inventory.html', {
+        'products': products,
+        'retailer': retailer,
+        'low_stock_count': low_stock_count,
+        'total_products': total_products,
+        'category_labels': json.dumps(category_labels),
+        'category_counts': json.dumps(category_counts),
+    })
 # @login_required
 # def inventory_list(request):
 #     retailer = get_object_or_404(Retailer, user=request.user)
