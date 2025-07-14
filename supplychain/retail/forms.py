@@ -319,3 +319,12 @@ class DemandForecastForm(forms.ModelForm):
         widgets = {
             'forecast_period': forms.Select(attrs={'class': 'form-select'})
         }
+
+class InventoryForm(forms.ModelForm):
+    class Meta:
+        model = Inventory
+        fields = ['warehouse', 'quantity']
+        widgets = {
+            'warehouse': forms.Select(attrs={'class': 'form-select'}),
+            'quantity': forms.NumberInput(attrs={'class': 'form-control'}),
+        }
