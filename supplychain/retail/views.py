@@ -99,30 +99,54 @@ def dashboard(request):
 # Inventory Management Views
 @login_required
 def inventory_list(request):
-    retailer = get_object_or_404(Retailer, user=request.user)
-    products = Product.objects.filter(retailer=retailer).order_by('name')
+    try:
+        retailer = Retailer.objects.get(user=request.user)
+        products = Product.objects.filter(retailer=retailer).select_related('retailer').prefetch_related('inventory_set')
+        
+        # Debug print (remove in production)
+        print(f"Found {products.count()} products for {retailer.company_name}")
+        for p in products:
+            print(f"{p.name} - Inventory: {p.inventory_set.count()} records")
+
+        # Calculate metrics
+        low_stock_count = products.filter(current_stock__lt=F('min_stock_level')).count()
+        
+        return render(request, 'retail/inventory.html', {
+            'products': products,
+            'retailer': retailer,
+            'low_stock_count': low_stock_count,
+            'total_products': products.count()
+        })
+        
+    except Retailer.DoesNotExist:
+        messages.error(request, "Retailer profile not found")
+        return redirect('create_retailer_profile')
+# @login_required
+# def inventory_list(request):
+#     retailer = get_object_or_404(Retailer, user=request.user)
+#     products = Product.objects.filter(retailer=retailer).order_by('name')
     
-    # Calculate metrics for the dashboard
-    low_stock_count = products.filter(current_stock__lt=F('min_stock_level')).count()
-    total_products = products.count()
+#     # Calculate metrics for the dashboard
+#     low_stock_count = products.filter(current_stock__lt=F('min_stock_level')).count()
+#     total_products = products.count()
     
-    # Get category distribution
-    category_distribution = products.values('category').annotate(count=Count('id'))
-    category_labels = [dict(Product.CATEGORY_CHOICES).get(item['category']) for item in category_distribution]
-    category_counts = [item['count'] for item in category_distribution]
+#     # Get category distribution
+#     category_distribution = products.values('category').annotate(count=Count('id'))
+#     category_labels = [dict(Product.CATEGORY_CHOICES).get(item['category']) for item in category_distribution]
+#     category_counts = [item['count'] for item in category_distribution]
     
-    # Check for low stock items
-    for product in products:
-        product.is_low_stock = product.current_stock < product.min_stock_level
+#     # Check for low stock items
+#     for product in products:
+#         product.is_low_stock = product.current_stock < product.min_stock_level
     
-    return render(request, 'retail/inventory.html', {
-        'products': products,
-        'retailer': retailer,
-        'low_stock_count': low_stock_count,
-        'total_products': total_products,
-        'category_labels': json.dumps(category_labels),
-        'category_counts': json.dumps(category_counts),
-    })
+#     return render(request, 'retail/inventory.html', {
+#         'products': products,
+#         'retailer': retailer,
+#         'low_stock_count': low_stock_count,
+#         'total_products': total_products,
+#         'category_labels': json.dumps(category_labels),
+#         'category_counts': json.dumps(category_counts),
+#     })
 
 @login_required
 def inventory_detail(request, product_id):
