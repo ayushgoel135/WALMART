@@ -66,6 +66,11 @@
                 </tr>
                 {% empty %}
                 <tr>
+                    <td>
+                        <a href="{% url 'add_inventory' product.id %}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-plus-circle"></i> Add Stock
+                        </a>
+                    </td>
                     <td colspan="5" class="text-center">No products found</td>
                 </tr>
                 {% endfor %}
